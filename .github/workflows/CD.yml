@@ -1,38 +1,40 @@
 name: Spring Boot CD
 
-on: 
+on:
   push:
     branches:
       - master
 
 jobs:
-  deploy: 
-    runs-on: ubuntu-latest 
+  deploy:
+    runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
+        
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
+          
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
+        
       - name: Build Spring Boot
         run: ./gradlew clean build -x test
-
+        
       - name: Copy jar to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: build/libs/*.jar
+          source: build/libs/CICD-Practice-0.0.1-SNAPSHOT.jar
           target: /home/kimminje661/j
-
+          strip_components: 2  # build/libs/ 제거
+          
       - name: Restart Spring Server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -41,6 +43,28 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /home/kimminje661/j
-            pkill -f 'java -jar' || true
-            chmod +x /home/kimminje661/j/build/libs
-            nohup java -jar *.jar > app.log 2>&1 &
+            
+            # 기존 프로세스 종료 (더 정확한 매칭)
+            pkill -f 'CICD-Practice.*\.jar' || true
+            sleep 2
+            
+            # jar 파일 확인
+            if [ ! -f "CICD-Practice-0.0.1-SNAPSHOT.jar" ]; then
+              echo "Error: jar file not found"
+              ls -la
+              exit 1
+            fi
+            
+            # 실행
+            nohup java -jar CICD-Practice-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+            
+            # 시작 확인
+            sleep 3
+            if pgrep -f 'CICD-Practice.*\.jar' > /dev/null; then
+              echo "Application started successfully"
+              tail -20 app.log
+            else
+              echo "Application failed to start"
+              cat app.log
+              exit 1
+            fi

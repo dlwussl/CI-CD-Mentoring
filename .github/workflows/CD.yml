@@ -42,4 +42,5 @@ jobs:
           script: |
             cd /home/kimminje661/j
             pkill -f 'java -jar' || true
+            chmod +x /home/kimminje661/j/build/libs
             nohup java -jar *.jar > app.log 2>&1 &

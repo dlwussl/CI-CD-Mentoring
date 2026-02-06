@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy: 
-    runs-on: ubuntu-latest // CI/CD 환경, 스텝은 실행단위
+    runs-on: ubuntu-latest 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           source: build/libs/*.jar
-          target: /home/ubuntu/app
+          target: /home/kimminje661/j
 
       - name: Restart Spring Server
         uses: appleboy/ssh-action@v1.0.3

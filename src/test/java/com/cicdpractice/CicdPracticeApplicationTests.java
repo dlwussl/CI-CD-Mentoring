@@ -1,4 +1,4 @@
-package java.cicdpractice;
+package com.cicdpractice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

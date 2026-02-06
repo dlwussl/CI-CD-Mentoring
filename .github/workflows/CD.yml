@@ -34,30 +34,24 @@ jobs:
           script: |
             cd /home/kimminje661/j/source
             
-            # 실행 권한 부여
-            chmod +x gradlew
+            # 기존 컨테이너 정리
+            docker compose down
             
-            # 빌드
-            ./gradlew clean build -x test
+            # 새로 빌드 및 실행
+            docker compose up -d --build
             
-            # 기존 프로세스 종료
-            pkill -f 'CICD-Practice.*\.jar' || true
-            sleep 2
+            # 컨테이너 시작 대기
+            sleep 10
             
-            # jar 파일을 실행 디렉토리로 복사
-            cp build/libs/CICD-Practice-0.0.1-SNAPSHOT.jar /home/kimminje661/j/app.jar
+            # 상태 확인
+            docker compose ps
+            docker compose logs --tail=50
             
-            # 실행
-            cd /home/kimminje661/j
-            nohup java -jar app.jar > app.log 2>&1 &
-            
-            # 시작 확인
-            sleep 5
-            if pgrep -f 'app.jar' > /dev/null; then
-              echo "Application started successfully"
-              tail -30 app.log
+            # 헬스체크
+            if docker compose ps | grep -q "Up"; then
+              echo "✅ Container is running"
             else
-              echo "Application failed to start"
-              cat app.log
+              echo "❌ Container failed to start"
+              docker compose logs
               exit 1
             fi
